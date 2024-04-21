@@ -4,9 +4,9 @@ import pygame
 
 # Константы для размеров поля и сетки:
 SCREEN_WIDTH, SCREEN_HEIGHT = 640, 480
-CELL_SIZE = 20
-GRID_WIDTH = SCREEN_WIDTH // CELL_SIZE
-GRID_HEIGHT = SCREEN_HEIGHT // CELL_SIZE
+GRID_SIZE = 20
+GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
+GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 
 # Направления движения:
 UP = (0, -1)
@@ -45,12 +45,16 @@ clock = pygame.time.Clock()
 class GameObject:
     """Базовый класс для всех игровых объектов на поле."""
 
-    body_color: tuple[int, int, int]
+    body_color: tuple[int, int, int] = (0, 0, 0)
 
     def __init__(self):
         """Инициализирует позицию объекта в центре игрового поля."""
-        self.position = ((GRID_WIDTH - 1 // 2) * CELL_SIZE,
-                         (GRID_HEIGHT - 1 // 2) * CELL_SIZE)
+        self.position = ((GRID_WIDTH - 1 // 2) * GRID_SIZE,
+                         (GRID_HEIGHT - 1 // 2) * GRID_SIZE)
+        
+    def draw(self):
+        """Заготовка для child-классов."""
+        pass
 
 
 class Apple(GameObject):
@@ -64,12 +68,12 @@ class Apple(GameObject):
 
     def randomize_position(self):
         """Устанавливает случайное положение яблока на игровом поле."""
-        self.position = (randint(1, GRID_WIDTH - 1) * CELL_SIZE,
-                         randint(1, GRID_HEIGHT - 1) * CELL_SIZE)
+        self.position = (randint(1, GRID_WIDTH - 1) * GRID_SIZE,
+                         randint(1, GRID_HEIGHT - 1) * GRID_SIZE)
 
     def draw(self):
         """Отрисовывает яблоко на игровом поле."""
-        rect = pygame.Rect(self.position, (CELL_SIZE - 1, CELL_SIZE))
+        rect = pygame.Rect(self.position, (GRID_SIZE - 1, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, rect)
         pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
@@ -155,8 +159,8 @@ class Snake(GameObject):
         """Корректирует позицию головы змейки при выходе за границы поля."""
         col, row = new_head_position
 
-        max_col_coord = SCREEN_WIDTH - CELL_SIZE
-        max_row_coord = SCREEN_HEIGHT - CELL_SIZE
+        max_col_coord = SCREEN_WIDTH - GRID_SIZE
+        max_row_coord = SCREEN_HEIGHT - GRID_SIZE
 
         if new_head_position[0] > max_col_coord:
             col = 0
@@ -181,19 +185,19 @@ class Snake(GameObject):
     def draw(self):
         """Отрисовывает змейку на игровом поле."""
         for position in self.positions:
-            rect = (pygame.Rect(position, (CELL_SIZE, CELL_SIZE)))
+            rect = (pygame.Rect(position, (GRID_SIZE, GRID_SIZE)))
             pygame.draw.rect(screen, self.body_color, rect)
             pygame.draw.rect(screen, BORDER_COLOR, rect, 1)
 
         # Отрисовка головы змейки
-        head_rect = pygame.Rect(self.positions[0], (CELL_SIZE, CELL_SIZE))
+        head_rect = pygame.Rect(self.positions[0], (GRID_SIZE, GRID_SIZE))
         pygame.draw.rect(screen, self.body_color, head_rect)
         pygame.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
         # Затирание последнего сегмента
         if self.previous_tail_pos:
-            last_rect = pygame.Rect(self.previous_tail_pos, (CELL_SIZE,
-                                                             CELL_SIZE))
+            last_rect = pygame.Rect(self.previous_tail_pos, (GRID_SIZE,
+                                                             GRID_SIZE))
             pygame.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
 
