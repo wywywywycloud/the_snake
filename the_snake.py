@@ -51,7 +51,7 @@ class GameObject:
         """Инициализирует позицию объекта в центре игрового поля."""
         self.position = ((GRID_WIDTH - 1 // 2) * GRID_SIZE,
                          (GRID_HEIGHT - 1 // 2) * GRID_SIZE)
-        
+
     def draw(self):
         """Заготовка для child-классов."""
         pass
