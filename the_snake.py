@@ -203,23 +203,40 @@ def check_snake_ate_bad_food(snake: Snake, bad_food: BadFood):
 
 
 def handle_keys(game_object):
-    """Обрабатывает пользовательские вводы с клавиатуры.
+    """Обрабатывает пользовательские вводы.
 
-    Управляет направлением игрового объекта.
+    Обрабатывает ввод с клавиатуры
+    и управляет направлением игрового объекта.
     """
+    DIRECTION_MAP = {
+        (pg.K_UP, DOWN): None,
+        (pg.K_DOWN, UP): None,
+        (pg.K_LEFT, RIGHT): None,
+        (pg.K_RIGHT, LEFT): None,
+        (pg.K_UP, UP): UP,
+        (pg.K_UP, LEFT): UP,
+        (pg.K_UP, RIGHT): UP,
+        (pg.K_DOWN, DOWN): DOWN,
+        (pg.K_DOWN, LEFT): DOWN,
+        (pg.K_DOWN, RIGHT): DOWN,
+        (pg.K_LEFT, LEFT): LEFT,
+        (pg.K_LEFT, UP): LEFT,
+        (pg.K_LEFT, DOWN): LEFT,
+        (pg.K_RIGHT, RIGHT): RIGHT,
+        (pg.K_RIGHT, UP): RIGHT,
+        (pg.K_RIGHT, DOWN): RIGHT
+    }
+
     for event in pg.event.get():
         if event.type == pg.QUIT:
             pg.quit()
-            raise SystemExit
-        elif event.type == pg.KEYDOWN:
-            if event.key == pg.K_UP and game_object.direction != DOWN:
-                game_object.next_direction = UP
-            elif event.key == pg.K_DOWN and game_object.direction != UP:
-                game_object.next_direction = DOWN
-            elif event.key == pg.K_LEFT and game_object.direction != RIGHT:
-                game_object.next_direction = LEFT
-            elif event.key == pg.K_RIGHT and game_object.direction != LEFT:
-                game_object.next_direction = RIGHT
+            raise SystemExit('Игра закрыта пользователем.')
+
+        if event.type == pg.KEYDOWN:
+            new_direction = DIRECTION_MAP.get(
+                (event.key, game_object.direction), game_object.direction)
+            if new_direction:
+                game_object.next_direction = new_direction
 
 
 def check_collision(snake: Snake):
