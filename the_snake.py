@@ -55,7 +55,7 @@ class GameObject:
 class Apple(GameObject):
     """Класс яблока, которое может быть съедено змейкой."""
 
-    def __init__(self, occupied_coords):
+    def __init__(self, occupied_coords=[]):
         """Инициализирует объект со случайными координатами на поле."""
         super().__init__()
         while True:
