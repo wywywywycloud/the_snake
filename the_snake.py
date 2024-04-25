@@ -162,7 +162,7 @@ class Snake(GameObject):
         new_head_col = new_head_col % (SCREEN_WIDTH)
         new_head_row = new_head_row % (SCREEN_HEIGHT)
 
-        return (new_head_col, new_head_row)
+        return new_head_col, new_head_row
 
     def update_direction(self):
         """Обновляет направления после нажатия на кнопку."""
