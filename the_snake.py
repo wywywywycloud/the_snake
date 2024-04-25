@@ -1,3 +1,11 @@
+"""
+Этот модуль реализует классическую игру "Змейка" с использованием
+библиотеки Pygame.
+Игрок управляет змейкой, которая должна есть яблоки на игровом поле.
+При съедании яблок змейка увеличивается в размере. Игра также включает
+"плохую пищу", которая уменьшает размер змейки. Цель игры - съесть как
+можно больше яблок, избегая столкновения змейки с самой собой.
+"""
 from random import randint, choice
 import pygame as pg
 
@@ -16,6 +24,8 @@ RIGHT = (1, 0)
 DIRECTION_LIST = [UP, DOWN, LEFT, RIGHT]
 
 BOARD_BACKGROUND_COLOR = (0, 0, 0)  # Цвет фона - черный:
+
+DEFAULT_OBJECT_COLOR = BOARD_BACKGROUND_COLOR  # Совпадает с цветом фона
 
 BAD_FOOD_COLOR = (88, 57, 39)  # Цвет плохой еды
 
@@ -40,7 +50,7 @@ clock = pg.time.Clock()
 class GameObject:
     """Базовый класс для всех игровых объектов на поле."""
 
-    body_color: tuple[int, int, int] = (0, 0, 0)
+    body_color: tuple[int, int, int] = DEFAULT_OBJECT_COLOR
 
     def __init__(self):
         """Инициализирует позицию объекта в центре игрового поля."""
@@ -49,25 +59,25 @@ class GameObject:
 
     def draw(self):
         """Заготовка для child-классов."""
-        pass
 
 
 class Apple(GameObject):
     """Класс яблока, которое может быть съедено змейкой."""
 
-    def __init__(self, occupied_coords=[]):
+    def __init__(self, occupied_coords=[], color=APPLE_COLOR):
         """Инициализирует объект со случайными координатами на поле."""
         super().__init__()
+        self.randomize_position(occupied_coords)
+        self.body_color = color
+
+    def randomize_position(self, occupied_coords):
+        """Устанавливает случайное положение яблока на игровом поле."""
         while True:
-            self.randomize_position()
+            self.position = (randint(1, GRID_WIDTH - 1) * GRID_SIZE,
+                             randint(1, GRID_HEIGHT - 1) * GRID_SIZE)
+
             if self.position not in occupied_coords:
                 break
-        self.body_color = APPLE_COLOR
-
-    def randomize_position(self):
-        """Устанавливает случайное положение яблока на игровом поле."""
-        self.position = (randint(1, GRID_WIDTH - 1) * GRID_SIZE,
-                         randint(1, GRID_HEIGHT - 1) * GRID_SIZE)
 
     def draw(self):
         """Отрисовывает яблоко на игровом поле."""
@@ -79,22 +89,22 @@ class Apple(GameObject):
 class BadFood(Apple):
     """Класс плохой пищи, уменьшающей размер змейки при съедении."""
 
-    def __init__(self, occupied_coords):
+    def __init__(self, occupied_coords, color=BAD_FOOD_COLOR):
         """Инициализирует объект со случайными координатами на поле."""
         super().__init__(occupied_coords)
-        self.body_color = BAD_FOOD_COLOR
+        self.body_color = color
 
 
 class Snake(GameObject):
     """Класс змейки, управляемой игроком."""
 
-    def __init__(self):
+    def __init__(self, color=SNAKE_COLOR):
         """Инициализирует змейку в центре поля.
 
         Начальная длина - один сегмент.
         """
         super().__init__()
-        self.body_color = SNAKE_COLOR
+        self.body_color = color
         self.reset()
 
     def get_head_position(self):
@@ -112,7 +122,7 @@ class Snake(GameObject):
 
         new_head_position = self.fix_out_of_boundries(new_head_position)
         self.positions.insert(0, new_head_position)
-
+        self.previous_tail_pos = self.positions[-1]
         self.position = new_head_position
 
         if len(self.positions) > self.lenght:
@@ -123,9 +133,6 @@ class Snake(GameObject):
     def grow(self):
         """Увеличивает длину змейки на 1."""
         self.lenght += 1
-        self.previous_tail_pos = None
-
-        screen.fill(BOARD_BACKGROUND_COLOR)
 
     def shrink(self):
         """Уменьшает длину змейки, удаляя последний сегмент."""
@@ -136,8 +143,6 @@ class Snake(GameObject):
             self.reset()
         self.previous_tail_pos = None
 
-        screen.fill(BOARD_BACKGROUND_COLOR)
-
     def reset(self):
         """Сбрасывает змейку к начальному состоянию."""
         self.position = (((GRID_WIDTH - 1) // 2) * GRID_SIZE,
@@ -147,8 +152,6 @@ class Snake(GameObject):
         self.next_direction = None
         self.lenght = 1
         self.previous_tail_pos = None
-
-        screen.fill(BOARD_BACKGROUND_COLOR)
 
     @staticmethod
     def fix_out_of_boundries(new_head_position):
@@ -169,62 +172,37 @@ class Snake(GameObject):
 
     def draw(self):
         """Отрисовывает змейку на игровом поле."""
-        for position in self.positions:
-            rect = (pg.Rect(position, (GRID_SIZE, GRID_SIZE)))
-            pg.draw.rect(screen, self.body_color, rect)
-            pg.draw.rect(screen, BORDER_COLOR, rect, 1)
-
         # Отрисовка головы змейки
         head_rect = pg.Rect(self.get_head_position(), (GRID_SIZE, GRID_SIZE))
         pg.draw.rect(screen, self.body_color, head_rect)
         pg.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
-        # Затирание последнего сегмента
+        # Затирание последнего сегмента, если он есть
         if self.previous_tail_pos:
-            last_rect = pg.Rect(self.previous_tail_pos, (GRID_SIZE,
-                                                         GRID_SIZE))
+            last_rect = pg.Rect(self.previous_tail_pos, (GRID_SIZE, GRID_SIZE))
             pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
 
 def check_snake_ate_apple(snake: Snake, apple: Apple):
     """Проверяет, съела ли змейка яблоко."""
-    if not snake.get_head_position() == apple.position:
-        return False
-    return True
+    return bool(snake.get_head_position() == apple.position)
 
 
 def check_snake_ate_bad_food(snake: Snake, bad_food: BadFood):
     """Проверяет, съела ли змейка плохую пищу."""
-    if snake.get_head_position() == bad_food.position:
-        return True
-
-    else:
-        return False
+    return bool(snake.get_head_position() == bad_food.position)
 
 
 def handle_keys(game_object):
     """Обрабатывает пользовательские вводы.
 
-    Обрабатывает ввод с клавиатуры
-    и управляет направлением игрового объекта.
+    Обрабатывает ввод с клавиатуры и управляет направлением игрового объекта.
     """
     DIRECTION_MAP = {
-        (pg.K_UP, DOWN): None,
-        (pg.K_DOWN, UP): None,
-        (pg.K_LEFT, RIGHT): None,
-        (pg.K_RIGHT, LEFT): None,
-        (pg.K_UP, UP): UP,
-        (pg.K_UP, LEFT): UP,
-        (pg.K_UP, RIGHT): UP,
-        (pg.K_DOWN, DOWN): DOWN,
-        (pg.K_DOWN, LEFT): DOWN,
-        (pg.K_DOWN, RIGHT): DOWN,
-        (pg.K_LEFT, LEFT): LEFT,
-        (pg.K_LEFT, UP): LEFT,
-        (pg.K_LEFT, DOWN): LEFT,
-        (pg.K_RIGHT, RIGHT): RIGHT,
-        (pg.K_RIGHT, UP): RIGHT,
-        (pg.K_RIGHT, DOWN): RIGHT
+        pg.K_UP: UP,
+        pg.K_DOWN: DOWN,
+        pg.K_LEFT: LEFT,
+        pg.K_RIGHT: RIGHT
     }
 
     for event in pg.event.get():
@@ -233,10 +211,11 @@ def handle_keys(game_object):
             raise SystemExit('Игра закрыта пользователем.')
 
         if event.type == pg.KEYDOWN:
-            new_direction = DIRECTION_MAP.get(
-                (event.key, game_object.direction), game_object.direction)
-            if new_direction:
-                game_object.next_direction = new_direction
+            if event.key in DIRECTION_MAP:
+                new_direction = DIRECTION_MAP[event.key]
+                if (new_direction[0] + game_object.direction[0] != 0
+                        or new_direction[1] + game_object.direction[1] != 0):
+                    game_object.next_direction = new_direction
 
 
 def check_collision(snake: Snake):
@@ -253,20 +232,18 @@ def get_occupied_cells(*args: GameObject):
     Возвращает:
         list: Список кортежей с координатами занятых ячеек.
     """
-    positions_list = []
+    positions_set = set()
     for game_object in args:
         if hasattr(game_object, 'positions'):
-            positions_list.extend(game_object.positions)
+            positions_set.update(game_object.positions)
 
-        positions_list.append(game_object.position)
-    return positions_list
+        positions_set.add(game_object.position)
+    return positions_set
 
 
 def main():
     """Основная функция, инициализирующая и запускающая игровой цикл."""
     pg.init()
-
-    get_occupied_cells()
 
     snake = Snake()
     apple = Apple(get_occupied_cells(snake))
@@ -283,21 +260,22 @@ def main():
 
         if check_collision(snake):
             snake.reset()
-            apple = Apple(get_occupied_cells(snake, apple, bad_food))
-            bad_food = BadFood(get_occupied_cells(snake, apple, bad_food))
+            screen.fill(BOARD_BACKGROUND_COLOR)
+            apple.randomize_position(get_occupied_cells
+                                     (snake, apple, bad_food))
+            bad_food.randomize_position(get_occupied_cells
+                                        (snake, apple, bad_food))
 
         if check_snake_ate_apple(snake, apple):
-            apple = Apple(get_occupied_cells(snake, apple, bad_food))
+            apple.randomize_position(get_occupied_cells
+                                     (snake, apple, bad_food))
             snake.grow()
 
         if check_snake_ate_bad_food(snake, bad_food):
-            if snake.lenght == 1:
-                snake.reset()
-                apple = Apple(get_occupied_cells(snake, apple, bad_food))
-                bad_food = BadFood(get_occupied_cells(snake, apple, bad_food))
-            else:
-                snake.shrink()
-                bad_food = BadFood(get_occupied_cells(snake, apple, bad_food))
+            snake.shrink()
+            screen.fill(BOARD_BACKGROUND_COLOR)
+            bad_food.randomize_position(get_occupied_cells
+                                        (snake, apple, bad_food))
 
         apple.draw()
         snake.draw()
