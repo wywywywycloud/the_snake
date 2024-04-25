@@ -122,13 +122,13 @@ class Snake(GameObject):
 
         new_head_position = self.fix_out_of_boundries(new_head_position)
         self.positions.insert(0, new_head_position)
-        self.previous_tail_pos = self.positions[-1]
+        self.last = self.positions[-1]
         self.position = new_head_position
 
         if len(self.positions) > self.lenght:
-            self.previous_tail_pos = self.positions.pop()
+            self.last = self.positions.pop()
         else:
-            self.previous_tail_pos = None
+            self.last = None
 
     def grow(self):
         """Увеличивает длину змейки на 1."""
@@ -141,7 +141,7 @@ class Snake(GameObject):
             self.lenght -= 1
         else:
             self.reset()
-        self.previous_tail_pos = None
+        self.last = None
 
     def reset(self):
         """Сбрасывает змейку к начальному состоянию."""
@@ -151,7 +151,7 @@ class Snake(GameObject):
         self.direction = choice(DIRECTION_LIST)
         self.next_direction = None
         self.lenght = 1
-        self.previous_tail_pos = None
+        self.last = None
 
     @staticmethod
     def fix_out_of_boundries(new_head_position):
@@ -178,8 +178,8 @@ class Snake(GameObject):
         pg.draw.rect(screen, BORDER_COLOR, head_rect, 1)
 
         # Затирание последнего сегмента, если он есть
-        if self.previous_tail_pos:
-            last_rect = pg.Rect(self.previous_tail_pos, (GRID_SIZE, GRID_SIZE))
+        if self.last:
+            last_rect = pg.Rect(self.last, (GRID_SIZE, GRID_SIZE))
             pg.draw.rect(screen, BOARD_BACKGROUND_COLOR, last_rect)
 
 
